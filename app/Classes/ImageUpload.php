@@ -22,7 +22,7 @@ class ImageUpload
         $file = null,
         $data = null,
         string $folder = "other",
-        int $width = 900,
+        int $width = 1500,
         ?int $height = null,
         string $property = 'image',
         ?string $fileName = null,
@@ -160,20 +160,36 @@ class ImageUpload
         return $url . $fileName;
     }
 
-    protected function saveFile($file, $width, $hight, $path, $fileName)
-    {
-        // Check if the uploaded file is an image
-        if ($file->isValid() && Str::startsWith($file->getMimeType(), 'image/')) {
-            try {
-                Image::read($file)->scale($width, $hight)->save($path . $fileName);
-            } catch (\Throwable $th) {
-                throw $th;
-                File::put($path . $fileName, file_get_contents($file));
+   protected function saveFile($file, $width, $height, $path, $fileName)
+{
+    // Check if the uploaded file is an image
+    if ($file->isValid() && Str::startsWith($file->getMimeType(), 'image/')) {
+        try {
+            $image = \Intervention\Image\Facades\Image::make($file);
+
+            // Resize with aspect ratio maintained
+            if ($width && !$height) {
+                $image->resize($width, null, function ($constraint) {
+                    $constraint->aspectRatio();
+                    $constraint->upsize();
+                });
+            } elseif ($width && $height) {
+                $image->resize($width, $height, function ($constraint) {
+                    $constraint->aspectRatio();
+                    $constraint->upsize();
+                });
             }
-        } else {
+
+            $image->save($path . $fileName, 90); // 90% quality
+        } catch (\Throwable $th) {
+            // fallback if intervention fails
             File::put($path . $fileName, file_get_contents($file));
         }
+    } else {
+        File::put($path . $fileName, file_get_contents($file));
     }
+}
+
 
     protected function convertAndSaveBase64($base64String, $filename)
     {

@@ -1,11 +1,11 @@
 <?php
 
-namespace App\Http\Resources;
+namespace App\Http\Resources\web;
 
 use Illuminate\Http\Request;
 use Illuminate\Http\Resources\Json\JsonResource;
 
-class GalleryResource extends JsonResource
+class WishersResource extends JsonResource
 {
     /**
      * Transform the resource into an array.
@@ -16,12 +16,9 @@ class GalleryResource extends JsonResource
     {
         return [
             'id' => $this->id,
-            'name' => $this->name,
-            'type' => $this->type,
-            'image' => asset(path: $this->image),
-            'video_url' => $this->video_url,
+            'image' => asset($this->image),
             'sorting_index' => $this->sorting_index,
-            'status' => $this->status,
+            'status' => $this->status
         ];
     }
 }

@@ -22,9 +22,13 @@ class GalleryController extends BaseController
         try {
             $slider = Gallery::when($request->id, function ($q, $id) {
                 $q->where('id', $id);
-            })->when($request->status, function ($q, $status) {
-                $q->where('status', $status);
-            })->orderBy('sorting_index', 'ASC')->paginate($request->per_page ?? 15);
+            })
+                ->when($request->search, function ($q, $search) {
+                    $q->whereRaw('LOWER(name) LIKE ?', ['%' . strtolower($search) . '%']);
+                })
+                ->when($request->status, function ($q, $status) {
+                    $q->where('status', $status);
+                })->orderBy('sorting_index', 'ASC')->paginate($request->per_page ?? 15);
 
             return GalleryResource::collection($slider);
         } catch (ModelNotFoundException $exception) {
@@ -52,6 +56,7 @@ class GalleryController extends BaseController
             $gallery = Gallery::create([
                 'image' => null,
                 'type' => $request->type,
+                'name' => $request->video_url,
                 'video_url' => $request->video_url,
                 'sorting_index' => $request->sorting_index,
                 'status' => $request->status,
@@ -112,28 +117,22 @@ class GalleryController extends BaseController
     /**
      * Update the specified resource in storage.
      */
-    public function update(UpdateGalleryRequest $request, Gallery $gallery, ImageUpload $imageUpload)
+    public function update(UpdateGalleryRequest $request, $id, ImageUpload $imageUpload)
     {
+
+
+
         DB::beginTransaction();
         try {
-            $gallery->sorting_index = $request->sorting_index;
-            $gallery->video_url = $request->video_url;
-            $gallery->status = $request->status;
-            if ($request->image) {
-                if ($gallery->image) {
-                    $imageUpload->deleteFile($gallery->image, 'gallery-images');
-                }
 
-                $gallery->image = $imageUpload->fileUpload(
-                    file: $request->image,
-                    data: $gallery,
-                    folder: 'gallery-images',
-                    width: 1600,
-                    hight: 800,
-                    fileName: 'image' . $gallery->id
-                );
-            }
+            $gallery = Gallery::findOrFail($id);
+            $gallery->sorting_index = $request->sorting_index;
+            $gallery->name = $request->name;
+            $gallery->video_url = $request->video_url;
+            $gallery->type = $request->type;
+            $gallery->status = $request->status;
             $gallery->save();
+
             DB::commit();
             return $this->sendResponse(
                 message: 'gallery updated successfully.',
@@ -154,11 +153,11 @@ class GalleryController extends BaseController
     /**
      * Remove the specified resource from storage.
      */
-    public function destroy(Gallery $gallery, ImageUpload $imageUpload)
+    public function destroy($gallery, ImageUpload $imageUpload)
     {
         try {
             DB::beginTransaction();
-            $gallery = Gallery::findOrFail(id: $gallery->id);
+            $gallery = Gallery::findOrFail(id: $gallery);
             if ($gallery->image) {
                 $imageUpload->deleteFile($gallery->image, 'slider-images');
             }
@@ -169,10 +168,10 @@ class GalleryController extends BaseController
                 "message" => __("gallery Delete successfully")
             ]);
         } catch (ModelNotFoundException $exception) {
-            return $this->sendError('gallery Delete failed.', $exception->getMessage());
+            return $this->sendError('gallery Delete failed.', $exception->getMessage(), 404);
         } catch (\Exception $exception) {
             DB::rollBack();
-            return $this->sendError('gallery Delete failed.', $exception->getMessage());
+            return $this->sendError('gallery Delete failed.', $exception->getMessage(), 404);
         }
     }
 }

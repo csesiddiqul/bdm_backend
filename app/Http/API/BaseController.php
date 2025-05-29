@@ -18,7 +18,7 @@ class BaseController
         return response()->json($response, $status);
     }
 
-    protected function sendError($message, $errors = [], $status = 401)
+    protected function sendError($message, $errors = [], $status = 404)
     {
         $response = [
             'success' => false,

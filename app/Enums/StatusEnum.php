@@ -5,7 +5,7 @@ namespace App\Enums;
 enum StatusEnum: int
 {
     case Active = 1;
-    case Inactive = 2;
+    case Inactive = 0;
 
 
     public static function asList(): array

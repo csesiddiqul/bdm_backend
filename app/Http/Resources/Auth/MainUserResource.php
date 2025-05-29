@@ -23,11 +23,9 @@ class MainUserResource extends JsonResource
             'email' => $this->email,
             'profile_image' => $this->profile_image ? asset($this->profile_image) : NULL,
             'status' => $this->status ? ApprovedStatusEnum::from($this->status)->getLabelText() : null,
-            'role' => new BloodDonorInfoResource($this->whenLoaded('roles')),
-            'bts_id' => $this->bts_id,
+            'role' => $this->whenLoaded('roles'),
             'email_verified_at' => $this->email_verified_at,
-            'blood_donor_info' => new BloodDonorInfoResource($this->whenLoaded('bloodDonorInfo')),
-            'patientInfo' => new PatientInfoResource($this->whenLoaded('patientInfo')),
+    
             'profile' => new ProfileResource($this->whenLoaded('profile')),
         ];
     }
